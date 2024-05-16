@@ -14,12 +14,12 @@ from preprocesamiento import preprocesamiento
 from imutils import paths
 parser = argparse.ArgumentParser(description='Segmentación de objetos extendidos.')
 parser.add_argument("-d" , "--dir_imagenes", action="store", dest="dir_imagenes", help="directorio de entrada")
-parser.add_argument("-r", "--dir_resultado", action="store", dest="dir_resultado", help="directorio de salida")
-parser.add_argument("-t", "--entrenar", action="store_true", help="Especifica si está en modo para entrenar el modelo")
-parser.add_argument("-re", "--reanudar", action="store_true", help="Especifica si está en modo de reanudar el entrenamiento del modelo")
-parser.add_argument("-k", "--kfold", action="store", dest="kf", help="Especifica un numero entero para el número de k fold en el que se quedó el entrenamiento.")
-parser.add_argument("-s", "--segmentar", action="store_true", help="Especifica si está en modo para segmentar las imágenes de prueba, tomando como base el modelo previamente creado")
-parser.add_argument("-o", "--extendidos", action="store_true", help="Especifica si está utilizando el programa para segmentación de objetos extendidos, debe utilizarse junto con -t o -s")
+parser.add_argument("-r", "--dir_results", action="store", dest="dir_resultado", help="directorio de salida")
+parser.add_argument("-t", "--train", action="store_true", help="Especifica si está en modo para entrenar el modelo")
+#parser.add_argument("-re", "--reanudar", action="store_true", help="Especifica si está en modo de reanudar el entrenamiento del modelo")
+#parser.add_argument("-k", "--kfold", action="store", dest="kf", help="Especifica un numero entero para el número de k fold en el que se quedó el entrenamiento.")
+parser.add_argument("-s", "--segment", action="store_true", help="Especifica si está en modo para segmentar las imágenes de prueba, tomando como base el modelo previamente creado")
+parser.add_argument("-o", "--extended", action="store_true", help="Especifica si está utilizando el programa para segmentación de objetos extendidos, debe utilizarse junto con -t o -s")
 args = parser.parse_args()
 #parser.print_help()
 if args.entrenar:
