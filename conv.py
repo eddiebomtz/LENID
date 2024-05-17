@@ -13,14 +13,14 @@ from os import listdir
 import skimage.io as io
 from config import Config
 from imutils import paths
-from imagen import Imagen
-from aumentar import Aumentar
+from image import Image
+from augment import Augment
 from keras.models import Model
 import matplotlib.pyplot as plt
 from keras.regularizers import l2
 from skimage.color import label2rgb
 from contextlib import redirect_stdout
-from preprocesamiento import preprocesamiento
+from preprocess import Preprocess
 from scikitplot.metrics import plot_confusion_matrix, plot_roc
 from sklearn.model_selection import KFold, RepeatedKFold, RepeatedStratifiedKFold
 from keras.losses import binary_crossentropy
@@ -47,34 +47,34 @@ class PerformanceVisualizationCallback(Callback):
         plot_roc(y_true, y_pred, ax=ax)
         fig.savefig(os.path.join(self.image_dir, 'roc_curve_epoch_' + str(epoch)))
 class Conv:
-    def __init__(self, lista_epochs, lista_optimizador, lista_init_mode, lista_filtro, lista_dropout):
-        self.lista_epochs = lista_epochs
-        self.lista_optimizador = lista_optimizador
-        self.lista_init_mode = lista_init_mode
-        self.lista_filtro = lista_filtro
-        self.lista_dropout = lista_dropout
-    def __bloque_capas__(self, entrada, num_filtros, tam_kernel, padding, strides, pool_size, kernel_init, activacion, dropout, downsampling, capa_down=None):
+    def __init__(self, list_epochs, list_optimizer, list_init_mode, list_filter, list_dropout):
+        self.list_epochs = list_epochs
+        self.list_optimizer = list_optimizer
+        self.list_init_mode = list_init_mode
+        self.list_filter = list_filter
+        self.list_dropout = list_dropout
+    def __block_layers__(self, input, num_filters, tam_kernel, padding, strides, pool_size, kernel_init, activation, dropout, downsampling, layer_down=None):
         dropout = float(dropout)
         if downsampling:
-            capa = Conv2D(num_filtros, tam_kernel, padding=padding, kernel_regularizer=l2(0.005), bias_regularizer=l2(0.005), kernel_initializer = kernel_init)(entrada)
+            layer = Conv2D(num_filters, tam_kernel, padding=padding, kernel_regularizer=l2(0.005), bias_regularizer=l2(0.005), kernel_initializer = kernel_init)(input)
         else:
-            conv2DTranspose = Conv2DTranspose(num_filtros, pool_size, strides=strides, padding=padding)(entrada)
-            capa = concatenate([conv2DTranspose, capa_down])
-            capa = Conv2D(num_filtros, tam_kernel, padding=padding, kernel_regularizer=l2(0.005), bias_regularizer=l2(0.005), kernel_initializer = kernel_init)(capa)
-        capa = Activation(activacion)(capa)
-        capa = Conv2D(num_filtros, tam_kernel, padding=padding, kernel_regularizer=l2(0.005), bias_regularizer=l2(0.005), kernel_initializer = kernel_init)(capa)
-        capa = Activation(activacion)(capa)
-        capa = Conv2D(num_filtros, tam_kernel, padding=padding, kernel_regularizer=l2(0.005), bias_regularizer=l2(0.005), kernel_initializer = kernel_init)(capa)
-        capa = Activation(activacion)(capa)
+            conv2DTranspose = Conv2DTranspose(num_filters, pool_size, strides=strides, padding=padding)(input)
+            layer = concatenate([conv2DTranspose, layer_down])
+            layer = Conv2D(num_filters, tam_kernel, padding=padding, kernel_regularizer=l2(0.005), bias_regularizer=l2(0.005), kernel_initializer = kernel_init)(layer)
+        layer = Activation(activation)(layer)
+        layer = Conv2D(num_filters, tam_kernel, padding=padding, kernel_regularizer=l2(0.005), bias_regularizer=l2(0.005), kernel_initializer = kernel_init)(layer)
+        layer = Activation(activation)(layer)
+        layer = Conv2D(num_filters, tam_kernel, padding=padding, kernel_regularizer=l2(0.005), bias_regularizer=l2(0.005), kernel_initializer = kernel_init)(layer)
+        layer = Activation(activation)(layer)
         if dropout > 0:
-            capa = Dropout(dropout)(capa)
+            layer = Dropout(dropout)(layer)
         if downsampling:
-            maxpool = MaxPooling2D(pool_size, strides=strides)(capa) 
-            return capa, maxpool
+            maxpool = MaxPooling2D(pool_size, strides=strides)(layer) 
+            return layer, maxpool
         else:
             if dropout > 0:
-                capa = Dropout(dropout)(capa)
-            return capa, conv2DTranspose
+                layer = Dropout(dropout)(layer)
+            return layer, conv2DTranspose
     def dice_coef(self, y_true, y_pred):
         import keras.backend as K
         y_true_f = K.flatten(y_true)
@@ -83,109 +83,109 @@ class Conv:
         return (2. * intersection + K.epsilon()) / (K.sum(y_true_f) + K.sum(y_pred_f) + K.epsilon())
     def dice_coef_loss(self, y_true, y_pred):
         return 1. - self.dice_coef(y_true, y_pred)
-    def __crea_modelo__(self, input_size, optimizer, filtro, dropout_rate, init_mode, resumen):
-        filtro = int(filtro)
+    def __create_model__(self, input_size, optimizer, filter, dropout_rate, init_mode, resumen):
+        filter = int(filter)
         dropout_rate = float(dropout_rate)
         inputs = Input(input_size)
-        down0, maxpool0 = self.__bloque_capas__(inputs, 32, (filtro, filtro), 'same', (2, 2), (2, 2), init_mode, 'relu', 0, True)
-        down1, maxpool1 = self.__bloque_capas__(maxpool0, 64, (filtro, filtro), 'same', (2, 2), (2, 2), init_mode, 'relu', 0, True)
-        down2, maxpool2 = self.__bloque_capas__(maxpool1, 128, (filtro, filtro), 'same', (2, 2), (2, 2), init_mode, 'relu', dropout_rate/2, True)
-        #down3, maxpool3 = self.__bloque_capas__(maxpool2, 256, (filtro, filtro), 'same', (2, 2), (2, 2), init_mode, 'relu', 0, True)
-        #down4, maxpool4 = self.__bloque_capas__(maxpool3, 512, (filtro, filtro), 'same', (2, 2), (2, 2), init_mode, 'relu', dropout_rate, True)
-        center, maxpoolc = self.__bloque_capas__(maxpool2, 256, (filtro, filtro), 'same', (2, 2), (2, 2), init_mode, 'relu', dropout_rate, True)
-        #up4, _ = self.__bloque_capas__(maxpool4, 512, (filtro, filtro), 'same', (2, 2), (2, 2), init_mode, 'relu', dropout_rate, False, down4)
-        #up3, _ = self.__bloque_capas__(up4, 256, (filtro, filtro), 'same', (2, 2), (2, 2), init_mode, 'relu', 0, False, down3)
-        up2, _ = self.__bloque_capas__(maxpool2, 128, (filtro, filtro), 'same', (2, 2), (2, 2), init_mode, 'relu', dropout_rate/2, False, down2)
-        up1, _ = self.__bloque_capas__(up2, 64, (filtro, filtro), 'same', (2, 2), (2, 2), init_mode, 'relu', 0, False, down1)
-        up0, _ = self.__bloque_capas__(up1, 32, (filtro, filtro), 'same', (2, 2), (2, 2), init_mode, 'relu', 0, False, down0)
-        segmentar = Conv2D(1, 1, activation = 'sigmoid')(up0)
-        modelo = Model(inputs = inputs, outputs = segmentar)
+        down0, maxpool0 = self.__block_layers__(inputs, 32, (filter, filter), 'same', (2, 2), (2, 2), init_mode, 'relu', 0, True)
+        down1, maxpool1 = self.__block_layers__(maxpool0, 64, (filter, filter), 'same', (2, 2), (2, 2), init_mode, 'relu', 0, True)
+        down2, maxpool2 = self.__block_layers__(maxpool1, 128, (filter, filter), 'same', (2, 2), (2, 2), init_mode, 'relu', dropout_rate/2, True)
+        #down3, maxpool3 = self.__block_layers__(maxpool2, 256, (filter, filter), 'same', (2, 2), (2, 2), init_mode, 'relu', 0, True)
+        #down4, maxpool4 = self.__block_layers__(maxpool3, 512, (filter, filter), 'same', (2, 2), (2, 2), init_mode, 'relu', dropout_rate, True)
+        center, maxpoolc = self.__block_layers__(maxpool2, 256, (filter, filter), 'same', (2, 2), (2, 2), init_mode, 'relu', dropout_rate, True)
+        #up4, _ = self.__block_layers__(maxpool4, 512, (filter, filter), 'same', (2, 2), (2, 2), init_mode, 'relu', dropout_rate, False, down4)
+        #up3, _ = self.__block_layers__(up4, 256, (filter, filter), 'same', (2, 2), (2, 2), init_mode, 'relu', 0, False, down3)
+        up2, _ = self.__block_layers__(maxpool2, 128, (filter, filter), 'same', (2, 2), (2, 2), init_mode, 'relu', dropout_rate/2, False, down2)
+        up1, _ = self.__block_layers__(up2, 64, (filter, filter), 'same', (2, 2), (2, 2), init_mode, 'relu', 0, False, down1)
+        up0, _ = self.__block_layers__(up1, 32, (filter, filter), 'same', (2, 2), (2, 2), init_mode, 'relu', 0, False, down0)
+        segment = Conv2D(1, 1, activation = 'sigmoid')(up0)
+        model = Model(inputs = inputs, outputs = segment)
         if optimizer == "Adam":
-            modelo.compile(optimizer = Adam(lr=2e-4), loss = self.bce_dice_loss, metrics = [self.dice_coef, 'accuracy'])
+            model.compile(optimizer = Adam(lr=2e-4), loss = self.bce_dice_loss, metrics = [self.dice_coef, 'accuracy'])
         elif optimizer == "SGD":
-            modelo.compile(optimizer = SGD(lr=0.0001, decay=1e-6, momentum=0.9, nesterov=True), loss = 'binary_crossentropy', metrics = ['accuracy'])
+            model.compile(optimizer = SGD(lr=0.0001, decay=1e-6, momentum=0.9, nesterov=True), loss = 'binary_crossentropy', metrics = ['accuracy'])
         elif optimizer == "RMSprop":
-            modelo.compile(optimizer = RMSprop(lr=0.001, rho=0.9), loss = 'binary_crossentropy', metrics = ['accuracy'])
+            model.compile(optimizer = RMSprop(lr=0.001, rho=0.9), loss = 'binary_crossentropy', metrics = ['accuracy'])
         elif optimizer == "Adagrad":
-            modelo.compile(optimizer = Adagrad(lr=0.01), loss = 'binary_crossentropy', metrics = ['accuracy'])
+            model.compile(optimizer = Adagrad(lr=0.01), loss = 'binary_crossentropy', metrics = ['accuracy'])
         elif optimizer == "Adadelta":
-            modelo.compile(optimizer = Adadelta(lr=1.0, rho=0.95), loss = 'binary_crossentropy', metrics = ['accuracy'])
+            model.compile(optimizer = Adadelta(lr=1.0, rho=0.95), loss = 'binary_crossentropy', metrics = ['accuracy'])
         elif optimizer == "Adamax":
-            modelo.compile(optimizer = Adamax(lr=0.002, beta_1=0.9, beta_2=0.999), loss = 'binary_crossentropy', metrics = ['accuracy'])
+            model.compile(optimizer = Adamax(lr=0.002, beta_1=0.9, beta_2=0.999), loss = 'binary_crossentropy', metrics = ['accuracy'])
         elif optimizer == "Nadam":
-            modelo.compile(optimizer = Nadam(lr=0.002, beta_1=0.9, beta_2=0.999), loss = 'binary_crossentropy', metrics = ['accuracy'])
+            model.compile(optimizer = Nadam(lr=0.002, beta_1=0.9, beta_2=0.999), loss = 'binary_crossentropy', metrics = ['accuracy'])
         if resumen:
-            print("*** GUARDANDO RESUMEN DE MODELO NEURONAL CONVOLUCIONAL ***")
-            with open(self.config.RUTA_GUARDAR_MODELO + '\\resumen_modelo.txt', 'w') as f:
+            print("*** SAVING CONVOLUTIONAL NEURAL NETWORK RESUME ***")
+            with open(self.config.PATH_SAVE_MODEL + '\\resume_model.txt', 'w') as f:
                 with redirect_stdout(f):
-                    modelo.summary()
-        return modelo
-    def cargar_modelo(self, ruta_modelo, optimizador, filtro, dropout, initializer, resumen):
-        modelo = self.__crea_modelo__((None, None, 1), optimizador, filtro, dropout, initializer, resumen)
-        modelo.load_weights(ruta_modelo + '\\modelo_cnn.hdf5')
-        return modelo
+                    model.summary()
+        return model
+    def load_model(self, path_model, optimizer, filter, dropout, initializer, resumen):
+        model = self.__create_model__((None, None, 1), optimizer, filter, dropout, initializer, resumen)
+        model.load_weights(path_model + '\\model_cnn.hdf5')
+        return model
     def bce_dice_loss(self, y_true, y_pred):
         loss = binary_crossentropy(y_true, y_pred) + self.dice_coef_loss(y_true, y_pred)
         return loss
-    def guardar_imagenes_k_fold(self, i, imagenes_entrenamiento, mascaras_entrenamiento, imagenes_validar, mascaras_validar):
+    def save_images_k_fold(self, i, training_images, masks_training, validate_images, masks_validate):
         print("*****************************************")
-        print("Guardando imágenes de entrenamiento")
-        print("Número de imágenes de entrenamiento: " + str(len(imagenes_entrenamiento)))
-        for ruta_img in imagenes_entrenamiento:
-            img = self.imagenobj.leer_TIFF(ruta_img)
-            nombreimg = ruta_img.replace(os.getcwd() + "\\" + self.config.RUTA_IMAGENES + '\\', "")
-            io.imsave(self.config.ENTRENAMIENTO_KFOLD + self.config.RUTA_IMAGENES + "\\" + nombreimg, img)
-        print("Número de máscaras (entrenamiento): " + str(len(mascaras_entrenamiento)))
-        for ruta_img in mascaras_entrenamiento:
-            img = self.imagenobj.leer_TIFF(ruta_img)
-            nombreimg = ruta_img.replace(os.getcwd() + "\\"  + self.config.RUTA_MASCARAS + '\\', "")
-            io.imsave(self.config.ENTRENAMIENTO_KFOLD + self.config.RUTA_MASCARAS + "\\" + nombreimg, img)
-        print("Guardando imágenes para validación")
-        print("Número de imágenes de validacion: " + str(len(imagenes_validar)))
-        for ruta_img in imagenes_validar:
-            img =  self.imagenobj.leer_TIFF(ruta_img)
-            nombreimg = ruta_img.replace(os.getcwd() + "\\" + self.config.RUTA_IMAGENES + '\\', "")
-            io.imsave(self.config.ENTRENAMIENTO_KFOLD + self.config.RUTA_VALIDAR_IMG + "\\" + nombreimg, img)
-        print("Número de máscaras (validación) : " + str(len(mascaras_validar)))
-        for ruta_img in mascaras_validar:
-            img =  self.imagenobj.leer_TIFF(ruta_img)
-            nombreimg = ruta_img.replace(os.getcwd() + "\\" + self.config.RUTA_MASCARAS + '\\', "")
-            io.imsave(self.config.ENTRENAMIENTO_KFOLD + self.config.RUTA_VALIDAR_MAS + "\\" + nombreimg, img)
+        print("Saving training images")
+        print("Number of training images: " + str(len(training_images)))
+        for path_img in training_images:
+            img = self.imageobj.read_TIFF(path_img)
+            name_img = path_img.replace(os.getcwd() + "\\" + self.config.PATH_IMAGES + '\\', "")
+            io.imsave(self.config.KFOLD_TRAINING + self.config.PATH_IMAGES + "\\" + name_img, img)
+        print("Number of mask (training): " + str(len(masks_training)))
+        for path_img in masks_training:
+            img = self.imageobj.read_TIFF(path_img)
+            name_img = path_img.replace(os.getcwd() + "\\"  + self.config.PATH_MASKS + '\\', "")
+            io.imsave(self.config.KFOLD_TRAINING + self.config.PATH_MASKS + "\\" + name_img, img)
+        print("Saving images for validation")
+        print("Number of images to validate: " + str(len(validate_images)))
+        for path_img in validate_images:
+            img =  self.imageobj.read_TIFF(path_img)
+            name_img = path_img.replace(os.getcwd() + "\\" + self.config.PATH_IMAGES + '\\', "")
+            io.imsave(self.config.KFOLD_TRAINING + self.config.PATH_VALIDATE_IMG + "\\" + name_img, img)
+        print("Number of masks to validate: " + str(len(masks_validate)))
+        for path_img in masks_validate:
+            img =  self.imageobj.read_TIFF(path_img)
+            name_img = path_img.replace(os.getcwd() + "\\" + self.config.PATH_MASKS + '\\', "")
+            io.imsave(self.config.KFOLD_TRAINING + self.config.PATH_VALIDATE_MASKS + "\\" + name_img, img)
         print("*****************************************")
-    def crea_directorio(self, ruta):
+    def create_directory(self, path):
         try:
-            os.stat(ruta)
+            os.stat(path)
         except:
-            os.mkdir(ruta)
-    def histograma(self, grayscale):
+            os.mkdir(path)
+    def histogram(self, grayscale):
         counts, vals = np.histogram(grayscale, bins=range(2 ** 8))
         plt.plot(range(0, (2 ** 8) - 1), counts)
         plt.title("Grayscale image histogram")
         plt.xlabel("Pixel intensity")
         plt.ylabel("Count")
-        plt.savefig(self.config.RUTA_GUARDAR_GRAFICAS + "/plot_histograma.png")
+        plt.savefig(self.config.PATH_SAVE_PLOTS + "/plot_histogram.png")
         plt.show()
         plt.close()
     
-    def prediccion_a_img(self, prediccion, porcentaje):
-        imgbool = prediccion.astype('float')
-        imgbool[imgbool > porcentaje] = 1
-        imgbool[imgbool <= porcentaje] = 0
-        imagen = imgbool.astype('uint16')
-        imagen = imagen * 65535
-        imagen.shape = prediccion.shape
-        return imagen, imgbool
-    def elimina_estrellas(self, nombre, imgoriginal, ruta_guardar, imgbool, porcentaje):
-        imsinestrellas = imgoriginal * (1 - imgbool)
-        imsinestrellas.shape = imgoriginal.shape
-        imsinestrellas = imsinestrellas.astype('uint16')
-        return ruta_guardar + "/" + nombre + "_sin_estrellas_" + str(porcentaje) + ".tif", imsinestrellas
-    def prediccion_imagen_rgb(self, nombre, imgoriginal, imgbool, ruta_guardar, color_rgba, porcentaje):
-        h, w = imgbool.shape
-        imoriginal = Image.new('RGBA', (h, w), (0,0,0,0))
-        estrellas = Image.new('RGBA', (h, w), (0, 0, 0, 0))
+    def prediction_to_img(self, prediction, percentage):
+        img_bool = prediction.astype('float')
+        img_bool[img_bool > percentage] = 1
+        img_bool[img_bool <= percentage] = 0
+        image = img_bool.astype('uint16')
+        image = image * 65535
+        image.shape = prediction.shape
+        return image, img_bool
+    def remove_stars(self, name, img_original, save_path, img_bool, percentage):
+        img_without_stars = img_original * (1 - img_bool)
+        img_without_stars.shape = img_original.shape
+        img_without_stars = img_without_stars.astype('uint16')
+        return save_path + "/" + name + "_sin_stars_" + str(percentage) + ".tif", img_without_stars
+    def prediction_image_rgb(self, name, img_original, img_bool, save_path, color_rgba, percentage):
+        h, w = img_bool.shape
+        img_original = Image.new('RGBA', (h, w), (0,0,0,0))
+        stars = Image.new('RGBA', (h, w), (0, 0, 0, 0))
         imgrgba = np.zeros((h,w,4))
-        imguint = imgbool.astype('uint8')
+        imguint = img_bool.astype('uint8')
         imguint = imguint.reshape(h, w)
         for k in range(0, imgrgba.shape[0]):
             for j in range(0, imgrgba.shape[1]):
@@ -199,74 +199,74 @@ class Conv:
                     imgrgba[k,j,1] = 0
                     imgrgba[k,j,2] = 0
                     imgrgba[k,j,3] = 0
-        estrellas = Image.fromarray(np.uint8(imgrgba))
-        imoriginal = Image.fromarray(np.uint16(imgoriginal))
-        imagenconestrellas = Image.new('RGBA', (w, h), (0, 0, 0, 0))
-        imagenconestrellas.paste(imoriginal, box = (0, 0))
-        imagenconestrellas.paste(estrellas, box = (0, 0), mask=estrellas)
-        imagenconestrellas.save(ruta_guardar + "/" + nombre + "_predict_rgb_" + str(porcentaje) + ".tif")
-        return estrellas
-    def ordenar_alfanumerico(self, lista):
+        stars = Image.fromarray(np.uint8(imgrgba))
+        img_original = Image.fromarray(np.uint16(img_original))
+        image_with_stars = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+        image_with_stars.paste(img_original, box = (0, 0))
+        image_with_stars.paste(stars, box = (0, 0), mask=stars)
+        image_with_stars.save(save_path + "/" + name + "_predict_rgb_" + str(percentage) + ".tif")
+        return stars
+    def alphanumeric_order(self, list):
         import re
-        convertir = lambda texto: int(texto) if texto.isdigit() else texto.lower()
-        alphanum_key = lambda key: [ convertir(c) for c in re.split('([0-9]+)', key) ] 
-        return sorted(lista, key=alphanum_key)
-    def guardar_resultado(self, ruta_guardar,npimg, folder_imagenes, lista_imagenes, estrellas):
-        lista_imagenes = self.ordenar_alfanumerico(lista_imagenes)
+        convert = lambda text: int(text) if text.isdigit() else text.lower()
+        alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
+        return sorted(list, key=alphanum_key)
+    def save_result(self, save_path,npimg, folder_images, list_images, stars):
+        list_images = self.alphanumeric_order(list_images)
         for i,item in enumerate(npimg):
-            imgpredict = item[:,:,0]
-            img = imgpredict * 65535
+            img_predict = item[:,:,0]
+            img = img_predict * 65535
             simg = img.astype('uint16')
-            rutaoriginal = lista_imagenes[i]
-            nombre = rutaoriginal.replace(folder_imagenes + "\\", "")
-            nombre = nombre.replace(".tif", "")
-            print("Ruta: " + ruta_guardar)
-            print("Nombre: " + nombre)
-            io.imsave(os.path.join(ruta_guardar,nombre + "_predict.tif"),simg)
-            imgint20, imgbool20 = self.prediccion_a_img(imgpredict, 0.2)
-            io.imsave(os.path.join(ruta_guardar,nombre + "_predict_20.tif"),imgint20)
-            imgint30, imgbool30 = self.prediccion_a_img(imgpredict, 0.3)
-            io.imsave(os.path.join(ruta_guardar,nombre + "_predict_30.tif"),imgint30)
-            imgint50, imgbool = self.prediccion_a_img(imgpredict, 0.5)
-            io.imsave(os.path.join(ruta_guardar,nombre + "_predict_50.tif"),imgint50)
-            imgint70, imgbool70 = self.prediccion_a_img(imgpredict, 0.7)
-            io.imsave(os.path.join(ruta_guardar,nombre + "_predict_70.tif"),imgint70)
-            imgint80, imgbool80 = self.prediccion_a_img(imgpredict, 0.8)
-            io.imsave(os.path.join(ruta_guardar,nombre + "_predict_80.tif"),imgint80)
-            imgint90, imgbool90 = self.prediccion_a_img(imgpredict, 0.9)
-            io.imsave(os.path.join(ruta_guardar,nombre + "_predict_90.tif"),imgint90)
+            original_path = list_images[i]
+            name = original_path.replace(folder_images + "\\", "")
+            name = name.replace(".tif", "")
+            print("Path: " + save_path)
+            print("name: " + name)
+            io.imsave(os.path.join(save_path,name + "_predict.tif"),simg)
+            imgint20, img_bool20 = self.prediction_to_img(img_predict, 0.2)
+            io.imsave(os.path.join(save_path,name + "_predict_20.tif"),imgint20)
+            imgint30, img_bool30 = self.prediction_to_img(img_predict, 0.3)
+            io.imsave(os.path.join(save_path,name + "_predict_30.tif"),imgint30)
+            imgint50, img_bool = self.prediction_to_img(img_predict, 0.5)
+            io.imsave(os.path.join(save_path,name + "_predict_50.tif"),imgint50)
+            imgint70, img_bool70 = self.prediction_to_img(img_predict, 0.7)
+            io.imsave(os.path.join(save_path,name + "_predict_70.tif"),imgint70)
+            imgint80, img_bool80 = self.prediction_to_img(img_predict, 0.8)
+            io.imsave(os.path.join(save_path,name + "_predict_80.tif"),imgint80)
+            imgint90, img_bool90 = self.prediction_to_img(img_predict, 0.9)
+            io.imsave(os.path.join(save_path,name + "_predict_90.tif"),imgint90)
             
-            self.imagenobj = Imagen()
-            imoriginal = Image.open(rutaoriginal)
-            imgoriginal = np.array(imoriginal)
-            imgoriginal.shape = imgpredict.shape
-            imgoriginal = imgoriginal.astype('uint16')
-            #20% probabilidad
-            estrellas20 = self.prediccion_imagen_rgb(nombre, imgoriginal, imgbool20, ruta_guardar, [141, 9, 118, 128], 20)
-            #30% probabilidad
-            estrellas30 = self.prediccion_imagen_rgb(nombre, imgoriginal, imgbool30, ruta_guardar, [22, 124, 243, 128], 30)
-            #50% probabilidad
-            estrellas50 = self.prediccion_imagen_rgb(nombre, imgoriginal, imgbool, ruta_guardar, [245, 138, 25, 128], 50)
-            #70% probabilidad
-            estrellas70 = self.prediccion_imagen_rgb(nombre, imgoriginal, imgbool70, ruta_guardar, [234, 51, 11, 128], 70)
-            #90% probabilidad
-            estrellas80 = self.prediccion_imagen_rgb(nombre, imgoriginal, imgbool80, ruta_guardar, [0, 128, 0, 128], 80)
-            #90% probabilidad
-            estrellas90 = self.prediccion_imagen_rgb(nombre, imgoriginal, imgbool90, ruta_guardar, [255, 255, 0, 128], 90)
-            h, w = imgoriginal.shape
-            imoriginal = Image.new('RGBA', (h, w), (0,0,0,0))
-            imoriginal = Image.fromarray(np.uint16(imgoriginal))
-            imagenconestrellas = Image.new('RGBA', (w, h), (0, 0, 0, 0))
-            imagenconestrellas.paste(imoriginal, box = (0, 0))
-            imagenconestrellas.paste(estrellas20, box = (0, 0), mask=estrellas20)
-            imagenconestrellas.paste(estrellas30, box = (0, 0), mask=estrellas30)
-            imagenconestrellas.paste(estrellas50, box = (0, 0), mask=estrellas50)
-            imagenconestrellas.paste(estrellas70, box = (0, 0), mask=estrellas70)
-            imagenconestrellas.paste(estrellas80, box = (0, 0), mask=estrellas80)
-            imagenconestrellas.paste(estrellas90, box = (0, 0), mask=estrellas90)
-            imagenconestrellas.save(ruta_guardar + "/" + nombre + "_predict_rgb_todas.tif")
+            self.imageobj = Image()
+            img_original = Image.open(original_path)
+            img_original = np.array(img_original)
+            img_original.shape = img_predict.shape
+            img_original = img_original.astype('uint16')
+            #20% probability
+            stars20 = self.prediction_image_rgb(name, img_original, img_bool20, save_path, [141, 9, 118, 128], 20)
+            #30% probability
+            stars30 = self.prediction_image_rgb(name, img_original, img_bool30, save_path, [22, 124, 243, 128], 30)
+            #50% probability
+            stars50 = self.prediction_image_rgb(name, img_original, img_bool, save_path, [245, 138, 25, 128], 50)
+            #70% probability
+            stars70 = self.prediction_image_rgb(name, img_original, img_bool70, save_path, [234, 51, 11, 128], 70)
+            #90% probability
+            stars80 = self.prediction_image_rgb(name, img_original, img_bool80, save_path, [0, 128, 0, 128], 80)
+            #90% probability
+            stars90 = self.prediction_image_rgb(name, img_original, img_bool90, save_path, [255, 255, 0, 128], 90)
+            h, w = img_original.shape
+            img_original = Image.new('RGBA', (h, w), (0,0,0,0))
+            img_original = Image.fromarray(np.uint16(img_original))
+            image_with_stars = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+            image_with_stars.paste(img_original, box = (0, 0))
+            image_with_stars.paste(stars20, box = (0, 0), mask=stars20)
+            image_with_stars.paste(stars30, box = (0, 0), mask=stars30)
+            image_with_stars.paste(stars50, box = (0, 0), mask=stars50)
+            image_with_stars.paste(stars70, box = (0, 0), mask=stars70)
+            image_with_stars.paste(stars80, box = (0, 0), mask=stars80)
+            image_with_stars.paste(stars90, box = (0, 0), mask=stars90)
+            image_with_stars.save(save_path + "/" + name + "_predict_rgb_todas.tif")
             
-    def guardar_graficas(self, i, hist, ruta_guardar):
+    def save_plots(self, i, hist, save_path):
         accuracy = hist.history['acc']
         val_accuracy = hist.history['val_acc']
         dice_coef = hist.history['dice_coef']
@@ -275,97 +275,97 @@ class Conv:
         val_loss = hist.history['val_loss']
         #dice_coef_loss = hist.history['dice_coef_loss']
         #val_dice_coef_loss = hist.history['val_dice_coef_loss']
-        rango_epochs = range(len(accuracy))
-        plt.plot(rango_epochs, accuracy, 'bo', label='Training accuracy')
-        plt.plot(rango_epochs, val_accuracy, 'b', label='Validation accuracy')
-        plt.plot(rango_epochs, dice_coef, 'ro', label='Training dice coef')
-        plt.plot(rango_epochs, val_dice_coef, 'r', label='Validation dice coef')
+        epochs_range = range(len(accuracy))
+        plt.plot(epochs_range, accuracy, 'bo', label='Training accuracy')
+        plt.plot(epochs_range, val_accuracy, 'b', label='Validation accuracy')
+        plt.plot(epochs_range, dice_coef, 'ro', label='Training dice coef')
+        plt.plot(epochs_range, val_dice_coef, 'r', label='Validation dice coef')
         plt.ylim(0, 1)
         plt.title('Training accuracy and dice coefficient')
         plt.legend()
         plt.xlabel("Epochs")
         plt.ylabel("accuracy and dice_coefficient")
-        plt.savefig(ruta_guardar + "/plot_accuracy_dice_coefficient_kfold_" + str(i) + ".png")
+        plt.savefig(save_path + "/plot_accuracy_dice_coefficient_kfold_" + str(i) + ".png")
         plt.show()
         
-        plt.plot(rango_epochs, accuracy, 'bo', label='Training accuracy')
-        plt.plot(rango_epochs, val_accuracy, 'b', label='Validation accuracy')
+        plt.plot(epochs_range, accuracy, 'bo', label='Training accuracy')
+        plt.plot(epochs_range, val_accuracy, 'b', label='Validation accuracy')
         plt.ylim(0, 1)
         plt.title('Training accuracy')
         plt.legend()
         plt.xlabel("Epochs")
-        plt.ylabel("accuracy and dice_coefficient")
-        plt.savefig(ruta_guardar + "/plot_accuracy_kfold_" + str(i) + ".png")
+        plt.ylabel("Accuracy and Dice Coefficient")
+        plt.savefig(save_path + "/plot_accuracy_kfold_" + str(i) + ".png")
         plt.show()
         
-        plt.plot(rango_epochs, dice_coef, 'ro', label='Training dice coef')
-        plt.plot(rango_epochs, val_dice_coef, 'r', label='Validation dice coef')
+        plt.plot(epochs_range, dice_coef, 'ro', label='Training dice coef')
+        plt.plot(epochs_range, val_dice_coef, 'r', label='Validation dice coef')
         plt.ylim(0, 1)
-        plt.title('Training dice coefficient')
+        plt.title('Training Dice Coefficient')
         plt.legend()
         plt.xlabel("Epochs")
-        plt.ylabel("Dice_coefficient")
-        plt.savefig(ruta_guardar + "/plot_dice_coefficient_kfold_" + str(i) + ".png")
+        plt.ylabel("Dice Coefficient")
+        plt.savefig(save_path + "/plot_dice_coefficient_kfold_" + str(i) + ".png")
         plt.show()
         
-        plt.plot(rango_epochs, loss, 'bo', label='Training dice coef loss')
-        plt.plot(rango_epochs, val_loss, 'b', label='Validation dice coef loss')
+        plt.plot(epochs_range, loss, 'bo', label='Training dice coef loss')
+        plt.plot(epochs_range, val_loss, 'b', label='Validation dice coef loss')
         plt.plot(np.argmin(hist.history["val_loss"]), np.min(hist.history["val_loss"]), marker="x", color="r", label="Best model")
         plt.title("Learning curve")
         plt.legend()
         plt.xlabel("Epochs")
         plt.ylabel("Loss")
-        plt.savefig(ruta_guardar + "/plot_dice_coef_loss_kfold_" + str(i) + ".png")
+        plt.savefig(save_path + "/plot_dice_coef_loss_kfold_" + str(i) + ".png")
         plt.show()
         
-    def fit_generador(self):
+    def fit_generator(self):
         batch_size = 6
-        for e in self.lista_epochs:
-            for o in self.lista_optimizador:
-                for ini in self.lista_init_mode:
-                    for f in self.lista_filtro:
-                        for d in self.lista_dropout:
+        for e in self.list_epochs:
+            for o in self.list_optimizer:
+                for ini in self.list_init_mode:
+                    for f in self.list_filter:
+                        for d in self.list_dropout:
                             i = 0
                             self.config = Config(e, o, ini, f, d, 1)
-                            self.imagenobj = Imagen()
-                            lista_imagenes = sorted(list(paths.list_images(os.getcwd() + "\\" + self.config.RUTA_IMAGENES)))
-                            lista_mascaras = sorted(list(paths.list_images(os.getcwd() + "\\" + self.config.RUTA_MASCARAS)))
+                            self.imageobj = Image()
+                            list_images = sorted(list(paths.list_images(os.getcwd() + "\\" + self.config.PATH_IMAGES)))
+                            list_masks = sorted(list(paths.list_images(os.getcwd() + "\\" + self.config.PATH_MASKS)))
                             k_folds = 10
                             kf = KFold(n_splits = k_folds, random_state = 42, shuffle = True)
-                            X = np.array(lista_imagenes)
-                            y = np.array(lista_mascaras)
-                            print("Parametros: Epochs: " + str(e) + " Optimizador: " + str(o) + " Init mode: " + str(ini) + " filtro " + str(f) + " dropout " + str(d))
+                            X = np.array(list_images)
+                            y = np.array(list_masks)
+                            print("Parameters: Epochs: " + str(e) + " Optimizer: " + str(o) + " Init mode: " + str(ini) + " filter " + str(f) + " dropout " + str(d))
                             if i > 0:
-                                self.config.config_directorios(e)
-                            modelo = self.__crea_modelo__((None, None, 1), o, f, d, ini, True)
+                                self.config.config_directories(e)
+                            model = self.__create_model__((None, None, 1), o, f, d, ini, True)
                             k = 1
-                            for entrenamiento_x, validar_y in kf.split(X):
-                                imagenes_entrenamiento = X[entrenamiento_x]
-                                imagenes_validar = X[validar_y]
-                                mascaras_entrenamiento = y[entrenamiento_x]
-                                mascaras_validar = y[validar_y]
-                                self.config.config_directorios_k_fold(k, o)
-                                self.guardar_imagenes_k_fold(k, imagenes_entrenamiento, mascaras_entrenamiento, imagenes_validar, mascaras_validar)
+                            for training_x, validate_y in kf.split(X):
+                                training_images = X[training_x]
+                                validate_images = X[validate_y]
+                                masks_training = y[training_x]
+                                masks_validate = y[validate_y]
+                                self.config.config_directories_k_fold(k, o)
+                                self.save_images_k_fold(k, training_images, masks_training, validate_images, masks_validate)
                                 try: 
-                                    modelo.load_weights(self.config.FOLDER_MODELO + '\\modelo_cnn.hdf5')
+                                    model.load_weights(self.config.MODEL_FILE + '\\model_cnn.hdf5')
                                 except Exception as OSError:
                                     pass
-                                csv = CSVLogger(self.config.RUTA_GUARDAR_RESULTADOS + '\\entrenamiento_kfold_' + str(k) + o + '.log')
-                                tb = TensorBoard(log_dir=self.config.RUTA_GUARDAR_RESULTADOS + '\\kfold_' + str(k) + '_' + o + '\\', histogram_freq=0, write_graph=True, write_images=True)
-                                checkpoint = ModelCheckpoint(self.config.RUTA_GUARDAR_MODELO + '\\modelo_cnn.hdf5', monitor='val_loss',verbose=2, save_best_only=True)
-                                steps_per_epoch = len(imagenes_entrenamiento) // batch_size
-                                val_steps = len(imagenes_validar) // batch_size
-                                aumentar = Aumentar()
-                                imagenes = sorted(list(paths.list_images(self.config.ENTRENAMIENTO_KFOLD + "\\" + self.config.RUTA_IMAGENES + "\\" )))
-                                mascaras = sorted(list(paths.list_images(self.config.ENTRENAMIENTO_KFOLD + "\\" + self.config.RUTA_MASCARAS + "\\")))
-                                entrenar_gen = aumentar.generador_aumentar(batch_size, imagenes, mascaras, self.config.RUTA_GUARDAR_AUMENTADAS, self.config.RUTA_GUARDAR_AUMENTADAS_MAS, self.config.TAMANIO_IMAGENES_X, self.config.TAMANIO_IMAGENES_Y, aumentar = True)
-                                imagenes = sorted(list(paths.list_images(self.config.ENTRENAMIENTO_KFOLD + "\\" + self.config.RUTA_VALIDAR_IMG + "\\")))
-                                mascaras = sorted(list(paths.list_images(self.config.ENTRENAMIENTO_KFOLD + "\\" + self.config.RUTA_VALIDAR_MAS + "\\")))
-                                validar_gen = aumentar.generador_aumentar(batch_size, imagenes, mascaras, self.config.RUTA_GUARDAR_AUMENTADAS_VAL, self.config.RUTA_GUARDAR_AUMENTADAS_VAL_MAS, self.config.TAMANIO_IMAGENES_X, self.config.TAMANIO_IMAGENES_Y, aumentar = False)
-                                #validation_data = list(validar_gen)
-                                #performance_cbk = PerformanceVisualizationCallback(model=modelo, validation_data=validation_data, image_dir=self.config.RUTA_GRAFICAS)
-                                hist = modelo.fit_generator(entrenar_gen, validation_data=validar_gen, validation_steps=val_steps, 
+                                csv = CSVLogger(self.config.PATH_SAVE_RESULTS + '\\training_kfold_' + str(k) + o + '.log')
+                                tb = TensorBoard(log_dir=self.config.PATH_SAVE_RESULTS + '\\kfold_' + str(k) + '_' + o + '\\', histogram_freq=0, write_graph=True, write_images=True)
+                                checkpoint = ModelCheckpoint(self.config.PATH_SAVE_MODEL + '\\model_cnn.hdf5', monitor='val_loss',verbose=2, save_best_only=True)
+                                steps_per_epoch = len(training_images) // batch_size
+                                val_steps = len(validate_images) // batch_size
+                                augment = Augment()
+                                images = sorted(list(paths.list_images(self.config.KFOLD_TRAINING + "\\" + self.config.PATH_IMAGES + "\\" )))
+                                masks = sorted(list(paths.list_images(self.config.KFOLD_TRAINING + "\\" + self.config.PATH_MASKS + "\\")))
+                                train_gen = augment.augment_generator(batch_size, images, masks, self.config.PATH_SAVE_AUGMENTED, self.config.PATH_SAVE_AUGMENTED_MAS, self.config.SIZE_IMAGES_X, self.config.SIZE_IMAGES_Y, augment = True)
+                                images = sorted(list(paths.list_images(self.config.KFOLD_TRAINING + "\\" + self.config.PATH_VALIDATE_IMG + "\\")))
+                                masks = sorted(list(paths.list_images(self.config.KFOLD_TRAINING + "\\" + self.config.PATH_VALIDATE_MASKS + "\\")))
+                                validate_gen = augment.augment_generator(batch_size, images, masks, self.config.PATH_SAVE_AUGMENTED_VAL, self.config.PATH_SAVE_AUGMENTED_VAL_MAS, self.config.SIZE_IMAGES_X, self.config.SIZE_IMAGES_Y, augment = False)
+                                #validation_data = list(validate_gen)
+                                #performance_cbk = PerformanceVisualizationCallback(model=model, validation_data=validation_data, image_dir=self.config.PATH_PLOTS)
+                                hist = model.fit_generator(train_gen, validation_data=validate_gen, validation_steps=val_steps, 
                                                             steps_per_epoch=steps_per_epoch, epochs=e, callbacks=[checkpoint, csv, tb])
-                                self.guardar_graficas(k, hist, self.config.RUTA_GUARDAR_GRAFICAS)
+                                self.save_plots(k, hist, self.config.PATH_SAVE_PLOTS)
                                 k += 1
                             i += 1

@@ -8,67 +8,65 @@ import os
 import argparse
 from os import listdir
 from conv import Conv
-from imagen import Imagen
-from aumentar import Aumentar
-from preprocesamiento import preprocesamiento
+from image import Image
+from augment import Augment
+from preprocess import Preprocess
 from imutils import paths
-parser = argparse.ArgumentParser(description='Segmentación de objetos extendidos.')
-parser.add_argument("-d" , "--dir_imagenes", action="store", dest="dir_imagenes", help="directorio de entrada")
-parser.add_argument("-r", "--dir_results", action="store", dest="dir_resultado", help="directorio de salida")
-parser.add_argument("-t", "--train", action="store_true", help="Especifica si está en modo para entrenar el modelo")
-#parser.add_argument("-re", "--reanudar", action="store_true", help="Especifica si está en modo de reanudar el entrenamiento del modelo")
-#parser.add_argument("-k", "--kfold", action="store", dest="kf", help="Especifica un numero entero para el número de k fold en el que se quedó el entrenamiento.")
-parser.add_argument("-s", "--segment", action="store_true", help="Especifica si está en modo para segmentar las imágenes de prueba, tomando como base el modelo previamente creado")
-parser.add_argument("-o", "--extended", action="store_true", help="Especifica si está utilizando el programa para segmentación de objetos extendidos, debe utilizarse junto con -t o -s")
+parser = argparse.ArgumentParser(description='Segmentation of extended objects.')
+parser.add_argument("-d" , "--dir_images", action="store", dest="dir_images", help="Input directory")
+parser.add_argument("-r", "--dir_results", action="store", dest="dir_result", help="Output directory")
+parser.add_argument("-t", "--train", action="store_true", help="Train the model")
+parser.add_argument("-s", "--segment", action="store_true", help="Segment with the previously CNN generated model")
+parser.add_argument("-o", "--extended", action="store_true", help="Specify if you want to train or segment extended objects, must be used with -t or -s")
 args = parser.parse_args()
 #parser.print_help()
-if args.entrenar:
+if args.train:
     os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-    print("Entrenar...")
-    lista_epochs = [30]
-    lista_dropout = [0.2, 0.4]
-    print("Objetos extendidos...")
-    lista_optimizador = ['Adam']
-    lista_init_mode = ['he_normal']
-    lista_filtro = [3]
-    if args.reanudar:
+    print("Traing...")
+    list_epochs = [30]
+    list_dropout = [0.2, 0.4]
+    print("Extended objects...")
+    list_optimizer = ['Adam']
+    list_init_mode = ['he_normal']
+    list_filter = [3]
+    if args.resume:
         kf = int(args.kf)
         conv = Conv(None, None, None, None, None)
-        conv.fit_generador_reanudar(kf)
+        conv.fit_generator_resume(kf)
     else:
-        conv = Conv(lista_epochs, lista_optimizador, lista_init_mode, lista_filtro, lista_dropout)
-        conv.fit_generador()
-elif args.segmentar:
+        conv = Conv(list_epochs, list_optimizer, list_init_mode, list_filter, list_dropout)
+        conv.fit_generator()
+elif args.segment:
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-    print("Segmentar...")
-    imagen = Imagen()
-    aumentar = Aumentar()
+    print("Segment...")
+    image = Image()
+    augment = Augment()
     conv = Conv(None, None, None, None, None)
     batch_size = 1
-    print("Objetos extendidos...")
-    IMAGENES_PRUEBAS = os.getcwd() + '\\pruebas'
-    FOLDER_IMAGENES = IMAGENES_PRUEBAS + '/' + args.dir_imagenes
-    FOLDER_MODELO = os.getcwd() + '/modelo'
-    FOLDER_RESULTADOS = os.getcwd() + '/resultados'
-    lista_imagenes = sorted(list(paths.list_images(FOLDER_IMAGENES)))
-    num_imagenes = len(lista_imagenes)
-    print("Número de imágenes de prueba: " + str(num_imagenes))
-    lista_resultados = sorted(list(listdir(FOLDER_RESULTADOS)))
-    for i, carpeta in enumerate(lista_resultados):
-        imagen.crea_directorio(FOLDER_RESULTADOS + "/" + carpeta + "/prediccion")
-        folder_modelo = FOLDER_RESULTADOS.replace(FOLDER_RESULTADOS, FOLDER_MODELO)
-        lista_parametros = carpeta.split("_")
-        epochs = lista_parametros[0]
-        optimizador = lista_parametros[7]
-        if lista_parametros[8] == "lecun" or lista_parametros[8] == "glorot" or lista_parametros[8] == "he":
-            initializer = lista_parametros[8] + "_" + lista_parametros[9]
-            filtro = lista_parametros[10]
-            dropout = lista_parametros[11]
+    print("Extended Objects...")
+    TEST_IMAGES = os.getcwd() + '\\test'
+    DIR_IMAGES = TEST_IMAGES + '/' + args.dir_images
+    MODEL_FILE = os.getcwd() + '/model'
+    DIR_RESULTS = os.getcwd() + '/results'
+    list_images = sorted(list(paths.list_images(DIR_IMAGES)))
+    num_images = len(list_images)
+    print("Number of test images: " + str(num_images))
+    list_results = sorted(list(listdir(DIR_RESULTS)))
+    for i, directory in enumerate(list_results):
+        image.create_directory(DIR_RESULTS + "/" + directory + "/prediction")
+        folder_model = DIR_RESULTS.replace(DIR_RESULTS, MODEL_FILE)
+        list_parameters = directory.split("_")
+        epochs = list_parameters[0]
+        optimizer = list_parameters[7]
+        if list_parameters[8] == "lecun" or list_parameters[8] == "glorot" or list_parameters[8] == "he":
+            initializer = list_parameters[8] + "_" + list_parameters[9]
+            filter = list_parameters[10]
+            dropout = list_parameters[11]
         else:
-            initializer = lista_parametros[8]
-            filtro = lista_parametros[9]
-            dropout = lista_parametros[10]
-        modelo = conv.cargar_modelo(folder_modelo + "/" + carpeta, optimizador, filtro, dropout, initializer, False)
-        test_gen = aumentar.generador_pruebas(FOLDER_IMAGENES, FOLDER_RESULTADOS + "/" + carpeta + "/prediccion", args.extendidos)
-        predecir_generador = modelo.predict_generator(test_gen, num_imagenes, verbose=2)
-        conv.guardar_resultado(FOLDER_RESULTADOS + "/" + carpeta + "/prediccion", predecir_generador, FOLDER_IMAGENES, lista_imagenes, args.estrellas)
+            initializer = list_parameters[8]
+            filter = list_parameters[9]
+            dropout = list_parameters[10]
+        model = conv.load_model(folder_model + "/" + directory, optimizer, filter, dropout, initializer, False)
+        test_gen = augment.test_generator(DIR_IMAGES, DIR_RESULTS + "/" + directory + "/prediction", args.extendidos)
+        predecir_generador = model.predict_generator(test_gen, num_images, verbose=2)
+        conv.save_result(DIR_RESULTS + "/" + directory + "/prediction", predecir_generador, DIR_IMAGES, list_images, args.stars)

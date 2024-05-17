@@ -6,162 +6,162 @@ Created on Thu Feb 20 12:48:20 2020
 import os
 import time
 class Config:
-    ENTRENAMIENTO = '\\entrenamiento\\'
-    ENTRENAMIENTO_ESTRELLAS = '\\entrenamiento_estrellas\\'
-    #RUTA_IMAGENES = ENTRENAMIENTO + 'imagenes_sin_fondo_512_threshold_2000'
-    #RUTA_IMAGENES = ENTRENAMIENTO + 'imagenes_sin_fondo_512_threshold_2000'
-    RUTA_IMAGENES = ENTRENAMIENTO + 'imagenes_recortadas'
-    RUTA_IMAGENES_ESTRELLAS = ENTRENAMIENTO_ESTRELLAS + 'fits_tif_512_pfcm'
-    #RUTA_MASCARAS = ENTRENAMIENTO + 'mascaras_512_threshold_2000'
-    #RUTA_MASCARAS = ENTRENAMIENTO + 'mascaras_512_threshold_2000'
-    RUTA_MASCARAS = ENTRENAMIENTO + 'mascaras_recortadas'
-    RUTA_MASCARAS_ESTRELLAS = ENTRENAMIENTO_ESTRELLAS + 'fits_tif_mascaras_512'
-    VALIDACION = '\\validar\\'
-    VALIDACION_ESTRELLAS = '\\validar_estrellas\\'
-    #RUTA_VALIDAR_IMG = VALIDACION + 'imagenes_sin_fondo_512_threshold_2000'
-    #RUTA_VALIDAR_IMG = VALIDACION + 'imagenes_sin_fondo_512_threshold_2000'
-    RUTA_VALIDAR_IMG = VALIDACION + 'imagenes_recortadas'
-    RUTA_VALIDAR_ESTRELLAS_IMG = VALIDACION_ESTRELLAS + 'fits_tif_512_pfcm'
-    #RUTA_VALIDAR_MAS = VALIDACION + 'mascaras_512_threshold_2000'
-    #RUTA_VALIDAR_MAS = VALIDACION + 'mascaras_512_threshold_2000'
-    RUTA_VALIDAR_MAS = VALIDACION + 'mascaras_recortadas'
-    RUTA_VALIDAR_ESTRELLAS_MAS = VALIDACION_ESTRELLAS + 'fits_tif_mascaras_512'
-    RUTA_MODELO = os.getcwd() + '\\modelo'
-    RUTA_MODELO_ESTRELLAS = os.getcwd() + '\\modelo_estrellas'
-    RUTA_GRAFICAS = os.getcwd() + '\\graficas'
-    RUTA_GRAFICAS_ESTRELLAS = os.getcwd() + '\\graficas_estrellas'
-    RUTA_RESULTADOS = os.getcwd() + '\\resultados'
-    RUTA_RESULTADOS_ESTRELLAS = os.getcwd() + '\\resultados_estrellas'
-    TAMANIO_IMAGENES_X = 512
-    TAMANIO_IMAGENES_Y = 512
-    __RUTA_AUMENTADAS = os.getcwd() + '\\aumentadas'
-    __RUTA_AUMENTADAS_MAS = os.getcwd() + '\\aumentadas_mascaras'
-    __RUTA_AUMENTADAS_VAL = os.getcwd() + '\\aumentadas_val'
-    __RUTA_AUMENTADAS_VAL_MAS = os.getcwd() + '\\aumentadas_val_mascaras'
-    def __init__(self, e, o, ini, f, d, tipo):
-        if tipo == 1:
-            self.config_directorios(e, o, ini, f, d)
-        elif tipo == 2:
-            self.config_directorios_estrellas(e, o, ini, d)
-    def __crea_directorio__(self, ruta):
+    TRAINING = '\\training\\'
+    TRAINING_STARS = '\\training_stars\\'
+    #PATH_IMAGES = TRAINING + 'images_sin_fondo_512_threshold_2000'
+    #PATH_IMAGES = TRAINING + 'images_sin_fondo_512_threshold_2000'
+    PATH_IMAGES = TRAINING + 'cropped_images'
+    PATH_IMAGES_STARS = TRAINING_STARS + 'fits_tif_512_pfcm'
+    #PATH_MASKS = TRAINING + 'masks_512_threshold_2000'
+    #PATH_MASKS = TRAINING + 'masks_512_threshold_2000'
+    PATH_MASKS = TRAINING + 'cropped_masks'
+    PATH_MASKS_STARS = TRAINING_STARS + 'fits_tif_masks_512'
+    VALIDATION = '\\validate\\'
+    VALIDATION_STARS = '\\validate_stars\\'
+    #PATH_VALIDATE_IMG = VALIDATION + 'images_sin_fondo_512_threshold_2000'
+    #PATH_VALIDATE_IMG = VALIDATION + 'images_sin_fondo_512_threshold_2000'
+    PATH_VALIDATE_IMG = VALIDATION + 'cropped_images'
+    PATH_VALIDATE_STARS_IMG = VALIDATION_STARS + 'fits_tif_512_pfcm'
+    #PATH_VALIDATE_MASKS = VALIDATION + 'masks_512_threshold_2000'
+    #PATH_VALIDATE_MASKS = VALIDATION + 'masks_512_threshold_2000'
+    PATH_VALIDATE_MASKS = VALIDATION + 'cropped_masks'
+    PATH_VALIDATE_STARS_MAS = VALIDATION_STARS + 'fits_tif_masks_512'
+    PATH_MODEL = os.getcwd() + '\\model'
+    PATH_MODEL_STARS = os.getcwd() + '\\model_stars'
+    PATH_PLOTS = os.getcwd() + '\\plots'
+    PATH_PLOTS_STARS = os.getcwd() + '\\plots_stars'
+    PATH_RESULTS = os.getcwd() + '\\results'
+    PATH_RESULTS_STARS = os.getcwd() + '\\results_stars'
+    SIZE_IMAGES_X = 512
+    SIZE_IMAGES_Y = 512
+    __PATH_AUGMENTED = os.getcwd() + '\\augmented'
+    __PATH_AUGMENTED_MAS = os.getcwd() + '\\augmented_masks'
+    __PATH_AUGMENTED_VAL = os.getcwd() + '\\augmented_val'
+    __PATH_AUGMENTED_VAL_MAS = os.getcwd() + '\\augmented_val_masks'
+    def __init__(self, e, o, ini, f, d, type):
+        if type == 1:
+            self.config_directories(e, o, ini, f, d)
+        elif type == 2:
+            self.config_directories_stars(e, o, ini, d)
+    def __create_directory__(self, path):
         try:
-            os.stat(ruta)
+            os.stat(path)
         except:
-            os.mkdir(ruta)
-    def config_directorios_reanudar(self, t, e, o, ini, d):
-        self.__tiempoyhora = time.strftime(t)
-        #ESTRELLAS
-        self.__crea_directorio__(self.RUTA_MODELO_ESTRELLAS)
-        self.RUTA_GUARDAR_MODELO_ESTRELLAS = self.RUTA_MODELO_ESTRELLAS + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_MODELO_ESTRELLAS)
-        self.__crea_directorio__(self.RUTA_GRAFICAS_ESTRELLAS)
-        self.RUTA_GUARDAR_GRAFICAS_ESTRELLAS = self.RUTA_GRAFICAS_ESTRELLAS + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_GRAFICAS_ESTRELLAS)
-        self.__crea_directorio__(self.RUTA_RESULTADOS_ESTRELLAS)
-        self.RUTA_GUARDAR_RESULTADOS_ESTRELLAS = self.RUTA_RESULTADOS_ESTRELLAS + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_RESULTADOS_ESTRELLAS)
+            os.mkdir(path)
+    def config_directories_resume(self, t, e, o, ini, d):
+        self.__time = time.strftime(t)
+        #STARS
+        self.__create_directory__(self.PATH_MODEL_STARS)
+        self.PATH_SAVE_MODEL_STARS = self.PATH_MODEL_STARS + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_layers"
+        self.__create_directory__(self.PATH_SAVE_MODEL_STARS)
+        self.__create_directory__(self.PATH_PLOTS_STARS)
+        self.PATH_SAVE_PLOTS_STARS = self.PATH_PLOTS_STARS + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_layers"
+        self.__create_directory__(self.PATH_SAVE_PLOTS_STARS)
+        self.__create_directory__(self.PATH_RESULTS_STARS)
+        self.PATH_SAVE_RESULTS_STARS = self.PATH_RESULTS_STARS + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_layers"
+        self.__create_directory__(self.PATH_SAVE_RESULTS_STARS)
         #AUMENTADAS
-        self.__crea_directorio__(self.__RUTA_AUMENTADAS)
-        self.RUTA_GUARDAR_AUMENTADAS = self.__RUTA_AUMENTADAS + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_AUMENTADAS)
-        self.__crea_directorio__(self.__RUTA_AUMENTADAS_MAS)
-        self.RUTA_GUARDAR_AUMENTADAS_MAS = self.__RUTA_AUMENTADAS_MAS + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_AUMENTADAS_MAS)
-        self.__crea_directorio__(self.__RUTA_AUMENTADAS_VAL)
-        self.RUTA_GUARDAR_AUMENTADAS_VAL = self.__RUTA_AUMENTADAS_VAL + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_AUMENTADAS_VAL)
-        self.__crea_directorio__(self.__RUTA_AUMENTADAS_VAL_MAS)
-        self.RUTA_GUARDAR_AUMENTADAS_VAL_MAS = self.__RUTA_AUMENTADAS_VAL_MAS + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_AUMENTADAS_VAL_MAS)
-    def config_directorios(self, e, o, ini, f, d):
-        self.__tiempoyhora = time.strftime("%d_%m_%y_%H_%M_%S")
+        self.__create_directory__(self.__PATH_AUGMENTED)
+        self.PATH_SAVE_AUGMENTED = self.__PATH_AUGMENTED + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_layers"
+        self.__create_directory__(self.PATH_SAVE_AUGMENTED)
+        self.__create_directory__(self.__PATH_AUGMENTED_MAS)
+        self.PATH_SAVE_AUGMENTED_MAS = self.__PATH_AUGMENTED_MAS + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_layers"
+        self.__create_directory__(self.PATH_SAVE_AUGMENTED_MAS)
+        self.__create_directory__(self.__PATH_AUGMENTED_VAL)
+        self.PATH_SAVE_AUGMENTED_VAL = self.__PATH_AUGMENTED_VAL + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_layers"
+        self.__create_directory__(self.PATH_SAVE_AUGMENTED_VAL)
+        self.__create_directory__(self.__PATH_AUGMENTED_VAL_MAS)
+        self.PATH_SAVE_AUGMENTED_VAL_MAS = self.__PATH_AUGMENTED_VAL_MAS + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_layers"
+        self.__create_directory__(self.PATH_SAVE_AUGMENTED_VAL_MAS)
+    def config_directories(self, e, o, ini, f, d):
+        self.__time = time.strftime("%d_%m_%y_%H_%M_%S")
         #NEBULOSAS
-        self.__crea_directorio__(self.RUTA_MODELO)
-        self.RUTA_GUARDAR_MODELO = self.RUTA_MODELO + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(f) + "_" + str(d) + "_3_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_MODELO)
-        self.__crea_directorio__(self.RUTA_GRAFICAS)
-        self.RUTA_GUARDAR_GRAFICAS = self.RUTA_GRAFICAS + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(f) + "_" + str(d) + "_3_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_GRAFICAS)
-        self.__crea_directorio__(self.RUTA_RESULTADOS)
-        self.RUTA_GUARDAR_RESULTADOS = self.RUTA_RESULTADOS + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(f) + "_" + str(d) + "_3_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_RESULTADOS)
+        self.__create_directory__(self.PATH_MODEL)
+        self.PATH_SAVE_MODEL = self.PATH_MODEL + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(f) + "_" + str(d) + "_3_layers"
+        self.__create_directory__(self.PATH_SAVE_MODEL)
+        self.__create_directory__(self.PATH_PLOTS)
+        self.PATH_SAVE_PLOTS = self.PATH_PLOTS + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(f) + "_" + str(d) + "_3_layers"
+        self.__create_directory__(self.PATH_SAVE_PLOTS)
+        self.__create_directory__(self.PATH_RESULTS)
+        self.PATH_SAVE_RESULTS = self.PATH_RESULTS + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(f) + "_" + str(d) + "_3_layers"
+        self.__create_directory__(self.PATH_SAVE_RESULTS)
         #AUMENTADAS
-        self.__crea_directorio__(self.__RUTA_AUMENTADAS)
-        self.RUTA_GUARDAR_AUMENTADAS = self.__RUTA_AUMENTADAS + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(f) + "_" +  str(d) + "_3_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_AUMENTADAS)
-        self.__crea_directorio__(self.__RUTA_AUMENTADAS_MAS)
-        self.RUTA_GUARDAR_AUMENTADAS_MAS = self.__RUTA_AUMENTADAS_MAS + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(f) + "_" +  str(d) + "_3_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_AUMENTADAS_MAS)
-        self.__crea_directorio__(self.__RUTA_AUMENTADAS_VAL)
-        self.RUTA_GUARDAR_AUMENTADAS_VAL = self.__RUTA_AUMENTADAS_VAL + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(f) + "_" +  str(d) + "_3_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_AUMENTADAS_VAL)
-        self.__crea_directorio__(self.__RUTA_AUMENTADAS_VAL_MAS)
-        self.RUTA_GUARDAR_AUMENTADAS_VAL_MAS = self.__RUTA_AUMENTADAS_VAL_MAS + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(f) + "_" +  str(d) + "_3_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_AUMENTADAS_VAL_MAS)
-    def config_directorios_estrellas(self, e, o, ini, d):
-        self.__tiempoyhora = time.strftime("%d_%m_%y_%H_%M_%S")
-        #ESTRELLAS
-        self.__crea_directorio__(self.RUTA_MODELO_ESTRELLAS)
-        self.RUTA_GUARDAR_MODELO_ESTRELLAS = self.RUTA_MODELO_ESTRELLAS + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_MODELO_ESTRELLAS)
-        self.__crea_directorio__(self.RUTA_GRAFICAS_ESTRELLAS)
-        self.RUTA_GUARDAR_GRAFICAS_ESTRELLAS = self.RUTA_GRAFICAS_ESTRELLAS + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_GRAFICAS_ESTRELLAS)
-        self.__crea_directorio__(self.RUTA_RESULTADOS_ESTRELLAS)
-        self.RUTA_GUARDAR_RESULTADOS_ESTRELLAS = self.RUTA_RESULTADOS_ESTRELLAS + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_RESULTADOS_ESTRELLAS)
+        self.__create_directory__(self.__PATH_AUGMENTED)
+        self.PATH_SAVE_AUGMENTED = self.__PATH_AUGMENTED + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(f) + "_" +  str(d) + "_3_layers"
+        self.__create_directory__(self.PATH_SAVE_AUGMENTED)
+        self.__create_directory__(self.__PATH_AUGMENTED_MAS)
+        self.PATH_SAVE_AUGMENTED_MAS = self.__PATH_AUGMENTED_MAS + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(f) + "_" +  str(d) + "_3_layers"
+        self.__create_directory__(self.PATH_SAVE_AUGMENTED_MAS)
+        self.__create_directory__(self.__PATH_AUGMENTED_VAL)
+        self.PATH_SAVE_AUGMENTED_VAL = self.__PATH_AUGMENTED_VAL + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(f) + "_" +  str(d) + "_3_layers"
+        self.__create_directory__(self.PATH_SAVE_AUGMENTED_VAL)
+        self.__create_directory__(self.__PATH_AUGMENTED_VAL_MAS)
+        self.PATH_SAVE_AUGMENTED_VAL_MAS = self.__PATH_AUGMENTED_VAL_MAS + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(f) + "_" +  str(d) + "_3_layers"
+        self.__create_directory__(self.PATH_SAVE_AUGMENTED_VAL_MAS)
+    def config_directories_stars(self, e, o, ini, d):
+        self.__time = time.strftime("%d_%m_%y_%H_%M_%S")
+        #STARS
+        self.__create_directory__(self.PATH_MODEL_STARS)
+        self.PATH_SAVE_MODEL_STARS = self.PATH_MODEL_STARS + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_layers"
+        self.__create_directory__(self.PATH_SAVE_MODEL_STARS)
+        self.__create_directory__(self.PATH_PLOTS_STARS)
+        self.PATH_SAVE_PLOTS_STARS = self.PATH_PLOTS_STARS + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_layers"
+        self.__create_directory__(self.PATH_SAVE_PLOTS_STARS)
+        self.__create_directory__(self.PATH_RESULTS_STARS)
+        self.PATH_SAVE_RESULTS_STARS = self.PATH_RESULTS_STARS + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_layers"
+        self.__create_directory__(self.PATH_SAVE_RESULTS_STARS)
         #AUMENTADAS
-        self.__crea_directorio__(self.__RUTA_AUMENTADAS)
-        self.RUTA_GUARDAR_AUMENTADAS = self.__RUTA_AUMENTADAS + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_AUMENTADAS)
-        self.__crea_directorio__(self.__RUTA_AUMENTADAS_MAS)
-        self.RUTA_GUARDAR_AUMENTADAS_MAS = self.__RUTA_AUMENTADAS_MAS + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_AUMENTADAS_MAS)
-        self.__crea_directorio__(self.__RUTA_AUMENTADAS_VAL)
-        self.RUTA_GUARDAR_AUMENTADAS_VAL = self.__RUTA_AUMENTADAS_VAL + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_AUMENTADAS_VAL)
-        self.__crea_directorio__(self.__RUTA_AUMENTADAS_VAL_MAS)
-        self.RUTA_GUARDAR_AUMENTADAS_VAL_MAS = self.__RUTA_AUMENTADAS_VAL_MAS + "\\" + str(e) + "_" + self.__tiempoyhora + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_capas"
-        self.__crea_directorio__(self.RUTA_GUARDAR_AUMENTADAS_VAL_MAS)
-    def config_directorios_k_fold(self, k, o):
+        self.__create_directory__(self.__PATH_AUGMENTED)
+        self.PATH_SAVE_AUGMENTED = self.__PATH_AUGMENTED + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_layers"
+        self.__create_directory__(self.PATH_SAVE_AUGMENTED)
+        self.__create_directory__(self.__PATH_AUGMENTED_MAS)
+        self.PATH_SAVE_AUGMENTED_MAS = self.__PATH_AUGMENTED_MAS + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_layers"
+        self.__create_directory__(self.PATH_SAVE_AUGMENTED_MAS)
+        self.__create_directory__(self.__PATH_AUGMENTED_VAL)
+        self.PATH_SAVE_AUGMENTED_VAL = self.__PATH_AUGMENTED_VAL + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_layers"
+        self.__create_directory__(self.PATH_SAVE_AUGMENTED_VAL)
+        self.__create_directory__(self.__PATH_AUGMENTED_VAL_MAS)
+        self.PATH_SAVE_AUGMENTED_VAL_MAS = self.__PATH_AUGMENTED_VAL_MAS + "\\" + str(e) + "_" + self.__time + "_" + o + "_" + str(ini) + "_" + str(d) + "_2_layers"
+        self.__create_directory__(self.PATH_SAVE_AUGMENTED_VAL_MAS)
+    def config_directories_k_fold(self, k, o):
         '''print("*****************************************")
-        print("Entrenamiento K-Fold " + str(k) + " " + o)
+        print("Training K-Fold " + str(k) + " " + o)
         print("*****************************************")
-        print("Creando carpeta " + self.__tiempoyhora + " en " + self.ENTRENAMIENTO)'''
+        print("Creating folder " + self.__time + " en " + self.TRAINING)'''
         #NEBULOSAS
-        self.ENTRENAMIENTO_TIEMPO = os.getcwd() + "\\" + self.ENTRENAMIENTO + "\\" + self.__tiempoyhora
-        self.__crea_directorio__(self.ENTRENAMIENTO_TIEMPO)
-        self.ENTRENAMIENTO_KFOLD = self.ENTRENAMIENTO_TIEMPO + "\\kfold_" + str(k)
+        self.TRAINING_TIME = os.getcwd() + "\\" + self.TRAINING + "\\" + self.__time
+        self.__create_directory__(self.TRAINING_TIME)
+        self.KFOLD_TRAINING = self.TRAINING_TIME + "\\kfold_" + str(k)
         #NEBULOSAS
-        #print("Creando carpeta kfold_" + str(k) + " en " + self.ENTRENAMIENTO_TIEMPO)
-        self.__crea_directorio__(self.ENTRENAMIENTO_KFOLD)
-        #print("Creando carpeta para imagenes (entrenamiento)")
-        self.__crea_directorio__(self.ENTRENAMIENTO_KFOLD + "\\" + self.ENTRENAMIENTO + "\\")
-        self.__crea_directorio__(self.ENTRENAMIENTO_KFOLD + "\\" + self.RUTA_IMAGENES)
-        #print("Creando carpeta para las máscaras (entrenamiento)")
-        self.__crea_directorio__(self.ENTRENAMIENTO_KFOLD + "\\" + self.ENTRENAMIENTO + "\\")
-        self.__crea_directorio__(self.ENTRENAMIENTO_KFOLD + "\\" + self.RUTA_MASCARAS)
-        #print("Creando carpeta para imagenes (validación)")
-        self.__crea_directorio__(self.ENTRENAMIENTO_KFOLD + "\\" + self.VALIDACION + "\\")
-        self.__crea_directorio__(self.ENTRENAMIENTO_KFOLD + "\\" + self.RUTA_VALIDAR_IMG)
-        #print("Creando carpeta para las máscaras (validación)")
-        self.__crea_directorio__(self.ENTRENAMIENTO_KFOLD + "\\" + self.VALIDACION + "\\")
-        self.__crea_directorio__(self.ENTRENAMIENTO_KFOLD + "\\" + self.RUTA_VALIDAR_MAS)
-        self.__crea_directorio__(self.RUTA_GUARDAR_RESULTADOS + "\\kfold_" + str(k) + "_" + o + "\\")
+        #print("Creating folder kfold_" + str(k) + " en " + self.TRAINING_TIME)
+        self.__create_directory__(self.KFOLD_TRAINING)
+        #print("Creating folder for images (training)")
+        self.__create_directory__(self.KFOLD_TRAINING + "\\" + self.TRAINING + "\\")
+        self.__create_directory__(self.KFOLD_TRAINING + "\\" + self.PATH_IMAGES)
+        #print("Creating folder for masks (training)")
+        self.__create_directory__(self.KFOLD_TRAINING + "\\" + self.TRAINING + "\\")
+        self.__create_directory__(self.KFOLD_TRAINING + "\\" + self.PATH_MASKS)
+        #print("Creating folder for images (validación)")
+        self.__create_directory__(self.KFOLD_TRAINING + "\\" + self.VALIDATION + "\\")
+        self.__create_directory__(self.KFOLD_TRAINING + "\\" + self.PATH_VALIDATE_IMG)
+        #print("Creating folder for masks (validación)")
+        self.__create_directory__(self.KFOLD_TRAINING + "\\" + self.VALIDATION + "\\")
+        self.__create_directory__(self.KFOLD_TRAINING + "\\" + self.PATH_VALIDATE_MASKS)
+        self.__create_directory__(self.PATH_SAVE_RESULTS + "\\kfold_" + str(k) + "_" + o + "\\")
         #print("*****************************************")
-    def config_directorios_k_fold_estrellas(self, k, o):
-        #ESTRELLAS
-        self.ENTRENAMIENTO_ESTRELLAS_TIEMPO = os.getcwd() + "\\" + self.ENTRENAMIENTO_ESTRELLAS + "\\" + self.__tiempoyhora
-        self.__crea_directorio__(self.ENTRENAMIENTO_ESTRELLAS_TIEMPO)
-        self.ENTRENAMIENTO_ESTRELLAS_KFOLD = self.ENTRENAMIENTO_ESTRELLAS_TIEMPO + "\\kfold_" + str(k)
-        #ESTRELLAS
-        self.__crea_directorio__(self.ENTRENAMIENTO_ESTRELLAS_KFOLD)
-        self.__crea_directorio__(self.ENTRENAMIENTO_ESTRELLAS_KFOLD + "\\" + self.ENTRENAMIENTO_ESTRELLAS + "\\")
-        self.__crea_directorio__(self.ENTRENAMIENTO_ESTRELLAS_KFOLD + "\\" + self.RUTA_IMAGENES_ESTRELLAS)
-        self.__crea_directorio__(self.ENTRENAMIENTO_ESTRELLAS_KFOLD + "\\" + self.ENTRENAMIENTO_ESTRELLAS + "\\")
-        self.__crea_directorio__(self.ENTRENAMIENTO_ESTRELLAS_KFOLD + "\\" + self.RUTA_MASCARAS_ESTRELLAS)
-        self.__crea_directorio__(self.ENTRENAMIENTO_ESTRELLAS_KFOLD + "\\" + self.VALIDACION_ESTRELLAS + "\\")
-        self.__crea_directorio__(self.ENTRENAMIENTO_ESTRELLAS_KFOLD + "\\" + self.RUTA_VALIDAR_ESTRELLAS_IMG)
-        self.__crea_directorio__(self.ENTRENAMIENTO_ESTRELLAS_KFOLD + "\\" + self.VALIDACION_ESTRELLAS + "\\")
-        self.__crea_directorio__(self.ENTRENAMIENTO_ESTRELLAS_KFOLD + "\\" + self.RUTA_VALIDAR_ESTRELLAS_MAS)
-        self.__crea_directorio__(self.RUTA_GUARDAR_RESULTADOS_ESTRELLAS + "\\kfold_" + str(k) + "_" + o + "\\")
+    def config_directories_k_fold_stars(self, k, o):
+        #STARS
+        self.TRAINING_STARS_TIME = os.getcwd() + "\\" + self.TRAINING_STARS + "\\" + self.__time
+        self.__create_directory__(self.TRAINING_STARS_TIME)
+        self.TRAINING_STARS_KFOLD = self.TRAINING_STARS_TIME + "\\kfold_" + str(k)
+        #STARS
+        self.__create_directory__(self.TRAINING_STARS_KFOLD)
+        self.__create_directory__(self.TRAINING_STARS_KFOLD + "\\" + self.TRAINING_STARS + "\\")
+        self.__create_directory__(self.TRAINING_STARS_KFOLD + "\\" + self.PATH_IMAGES_STARS)
+        self.__create_directory__(self.TRAINING_STARS_KFOLD + "\\" + self.TRAINING_STARS + "\\")
+        self.__create_directory__(self.TRAINING_STARS_KFOLD + "\\" + self.PATH_MASKS_STARS)
+        self.__create_directory__(self.TRAINING_STARS_KFOLD + "\\" + self.VALIDATION_STARS + "\\")
+        self.__create_directory__(self.TRAINING_STARS_KFOLD + "\\" + self.PATH_VALIDATE_STARS_IMG)
+        self.__create_directory__(self.TRAINING_STARS_KFOLD + "\\" + self.VALIDATION_STARS + "\\")
+        self.__create_directory__(self.TRAINING_STARS_KFOLD + "\\" + self.PATH_VALIDATE_STARS_MAS)
+        self.__create_directory__(self.PATH_SAVE_RESULTS_STARS + "\\kfold_" + str(k) + "_" + o + "\\")
