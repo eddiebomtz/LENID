@@ -13,7 +13,7 @@ The module cut to the stars considers the inconvenience of having bright stars a
 
 The original maximum value for the images is 65,535, but we defined a threshold manually to set it to 1,000 since the background of the image averages the values of 50–80. An emission nebula can have ranges of values very close to the bottom, but it can also have areas with higher emissions and average values between 200 and 700. A simple threshold is then applied to set the pixels greater than the threshold as null and be able to replace them with the neighboring pixels.
 
-The module image segmentation uses a modified \emph{U-NET} architecture presented by Ronneberger in 2015, which is a model that has worked well for segmentation in biomedical images. The module is divided into three functions image augmentation, training CNN U-NET, and low emission nebulae detection. 
+The module image segmentation uses a modified U-NET architecture presented by Ronneberger in 2015, which is a model that has worked well for segmentation in biomedical images. The module is divided into three functions image augmentation, training CNN U-NET, and low emission nebulae detection. 
 
 For now the is no user interface, it has to run with command line.
 
